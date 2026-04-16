@@ -42,14 +42,24 @@ export default function App() {
   const intervalRef = useRef(null);
   const speedFlashRef = useRef(0);
 
+  const isMobile = () => window.innerWidth < 600;
+
   // Responsive cell size
   useEffect(() => {
     const resize = () => {
-      const sidebarW = window.innerWidth < 600 ? 0 : 220;
-      const maxW = window.innerWidth - sidebarW - 32;
-      const maxH = window.innerHeight - 32;
-      const c = Math.floor(Math.min(maxW, maxH) / GRID);
-      setCell(Math.max(c, 14));
+      if (isMobile()) {
+        // On mobile: sidebar is ~100px tall at top, controls ~80px at bottom
+        const maxW = window.innerWidth - 16;
+        const maxH = window.innerHeight - 190;
+        const c = Math.floor(Math.min(maxW, maxH) / GRID);
+        setCell(Math.max(c, 12));
+      } else {
+        const sidebarW = 220;
+        const maxW = window.innerWidth - sidebarW - 32;
+        const maxH = window.innerHeight - 32;
+        const c = Math.floor(Math.min(maxW, maxH) / GRID);
+        setCell(Math.max(c, 14));
+      }
     };
     resize();
     window.addEventListener('resize', resize);
@@ -109,17 +119,20 @@ export default function App() {
     return () => clearInterval(intervalRef.current);
   }, [move]);
 
+  const changeDir = useCallback((next) => {
+    const cur = stateRef.current.dir;
+    if (next.x !== -cur.x || next.y !== -cur.y) setState(s => ({ ...s, dir: next }));
+  }, []);
+
   useEffect(() => {
     const handleKey = (e) => {
       const dirs = { ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 }, ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 } };
       if (dirs[e.key]) {
         e.preventDefault();
-        const cur = stateRef.current.dir;
-        const next = dirs[e.key];
-        if (next.x !== -cur.x || next.y !== -cur.y) setState(s => ({ ...s, dir: next }));
+        changeDir(dirs[e.key]);
       }
       if (e.key === ' ' || e.key === 'Enter') {
-        const { running, over, started } = stateRef.current;
+        const { running, over } = stateRef.current;
         if (!running && !over) setState(s => ({ ...s, running: true, started: true }));
       }
       if (e.key === 'p' || e.key === 'P' || e.key === 'Backspace') {
@@ -127,20 +140,30 @@ export default function App() {
         if (!over && started) {
           e.preventDefault();
           setState(s => ({ ...s, running: !s.running }));
-          // pause/resume the interval
-          if (running) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          } else {
-            lastTickRef.current = Date.now();
-            intervalRef.current = setInterval(move, speedRef.current);
-          }
+          if (running) { clearInterval(intervalRef.current); intervalRef.current = null; }
+          else { lastTickRef.current = Date.now(); intervalRef.current = setInterval(move, speedRef.current); }
         }
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, []);
+  }, [changeDir]);
+
+  // Touch swipe
+  useEffect(() => {
+    let tx = 0, ty = 0;
+    const onStart = (e) => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; };
+    const onEnd = (e) => {
+      const dx = e.changedTouches[0].clientX - tx;
+      const dy = e.changedTouches[0].clientY - ty;
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+      if (Math.abs(dx) > Math.abs(dy)) changeDir(dx > 0 ? { x: 1, y: 0 } : { x: -1, y: 0 });
+      else changeDir(dy > 0 ? { x: 0, y: 1 } : { x: 0, y: -1 });
+    };
+    window.addEventListener('touchstart', onStart, { passive: true });
+    window.addEventListener('touchend', onEnd, { passive: true });
+    return () => { window.removeEventListener('touchstart', onStart); window.removeEventListener('touchend', onEnd); };
+  }, [changeDir]);
 
   // Draw loop
   useEffect(() => {
@@ -437,6 +460,80 @@ export default function App() {
   };
 
   const SIZE = GRID * cell;
+  const mobile = window.innerWidth < 600;
+
+  const DPad = () => {
+    const btnDir = (dir) => {
+      const { running, over, started } = stateRef.current;
+      if (!started || over) return;
+      if (!running) { lastTickRef.current = Date.now(); intervalRef.current = setInterval(move, speedRef.current); setState(s => ({ ...s, running: true })); }
+      changeDir(dir);
+    };
+    return (
+      <div style={s.dpad}>
+        <div style={s.dpadRow}>
+          <button style={s.dpadBtn} onTouchStart={e => { e.preventDefault(); btnDir({ x: 0, y: -1 }); }} onClick={() => btnDir({ x: 0, y: -1 })}>▲</button>
+        </div>
+        <div style={s.dpadRow}>
+          <button style={s.dpadBtn} onTouchStart={e => { e.preventDefault(); btnDir({ x: -1, y: 0 }); }} onClick={() => btnDir({ x: -1, y: 0 })}>◀</button>
+          <div style={{ width: 44 }} />
+          <button style={s.dpadBtn} onTouchStart={e => { e.preventDefault(); btnDir({ x: 1, y: 0 }); }} onClick={() => btnDir({ x: 1, y: 0 })}>▶</button>
+        </div>
+        <div style={s.dpadRow}>
+          <button style={s.dpadBtn} onTouchStart={e => { e.preventDefault(); btnDir({ x: 0, y: 1 }); }} onClick={() => btnDir({ x: 0, y: 1 })}>▼</button>
+        </div>
+      </div>
+    );
+  };
+
+  if (mobile) {
+    return (
+      <div style={s.rootMobile}>
+        {/* Top bar */}
+        <div style={s.topBar}>
+          <div style={s.logo}>🐍 SNAKE</div>
+          <div style={s.topStats}>
+            <div style={s.statChip}><span style={s.chipLabel}>SCORE</span><span style={s.chipVal}>{displayScore}</span></div>
+            <div style={s.statChip}><span style={s.chipLabel}>BEST</span><span style={s.chipVal}>{scores[0]?.score ?? 0}</span></div>
+            <div style={s.statChip}><span style={s.chipLabel}>LVL</span><span style={s.chipVal}>{level}</span></div>
+          </div>
+        </div>
+
+        {/* Canvas */}
+        <div style={s.canvasWrap}>
+          <div style={{ ...s.boardGlow, width: SIZE, height: SIZE }}>
+            <canvas ref={canvasRef} width={SIZE} height={SIZE} style={s.canvas} />
+          </div>
+        </div>
+
+        {/* Bottom controls */}
+        <div style={s.bottomBar}>
+          {state.over ? (
+            <div style={s.mobileOverPanel}>
+              {!saved ? (
+                <div style={s.mobileRow}>
+                  <input style={{ ...s.input, flex: 1 }} placeholder="Your name" value={name} maxLength={12} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSave()} />
+                  <button style={{ ...s.btn, width: 'auto', padding: '10px 14px' }} onClick={handleSave}>💾</button>
+                </div>
+              ) : <div style={s.savedMsg}>✓ Saved!</div>}
+              <button style={{ ...s.btn, ...s.btnSecondary }} onClick={restart}>↺ RESTART</button>
+            </div>
+          ) : !state.started ? (
+            <button style={s.btn} onClick={() => setState(st => ({ ...st, running: true, started: true }))}>▶ START</button>
+          ) : (
+            <div style={s.mobileControls}>
+              <DPad />
+              <button style={{ ...s.btn, width: 70, padding: '8px 0', fontSize: 11 }} onClick={() => {
+                const { running } = stateRef.current;
+                if (running) { setState(st => ({ ...st, running: false })); clearInterval(intervalRef.current); intervalRef.current = null; }
+                else { lastTickRef.current = Date.now(); intervalRef.current = setInterval(move, speedRef.current); setState(st => ({ ...st, running: true })); }
+              }}>{state.running ? '⏸' : '▶'}</button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={s.root}>
@@ -541,6 +638,19 @@ export default function App() {
 
 const s = {
   root: { display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: '#0f1117', fontFamily: "'Inter','Segoe UI',sans-serif", color: '#e2e8f0' },
+  rootMobile: { display: 'flex', flexDirection: 'column', width: '100vw', height: '100dvh', overflow: 'hidden', background: '#0f1117', fontFamily: "'Inter','Segoe UI',sans-serif", color: '#e2e8f0' },
+  topBar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', background: '#161b22', borderBottom: '1px solid #30363d', flexShrink: 0 },
+  topStats: { display: 'flex', gap: 8 },
+  statChip: { display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#0f1117', border: '1px solid #30363d', borderRadius: 6, padding: '4px 10px', minWidth: 48 },
+  chipLabel: { fontSize: 9, letterSpacing: 2, color: '#8b949e' },
+  chipVal: { fontSize: 18, fontWeight: '700', color: '#f0f6fc' },
+  bottomBar: { flexShrink: 0, background: '#161b22', borderTop: '1px solid #30363d', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8 },
+  mobileOverPanel: { display: 'flex', flexDirection: 'column', gap: 8 },
+  mobileRow: { display: 'flex', gap: 8, alignItems: 'center' },
+  mobileControls: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  dpad: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 },
+  dpadRow: { display: 'flex', gap: 2 },
+  dpadBtn: { width: 44, height: 44, background: '#21262d', border: '1px solid #30363d', borderRadius: 8, color: '#c9d1d9', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none', WebkitUserSelect: 'none', touchAction: 'manipulation' },
   sidebar: { width: 200, minWidth: 200, height: '100vh', background: '#161b22', borderRight: '1px solid #30363d', display: 'flex', flexDirection: 'column', padding: '20px 16px', gap: 10, overflowY: 'auto' },
   logo: { fontSize: 16, fontWeight: '700', color: '#f0f6fc', letterSpacing: 2, marginBottom: 4, textAlign: 'center' },
   card: { background: '#0f1117', border: '1px solid #30363d', borderRadius: 8, padding: '10px 14px', textAlign: 'center' },
