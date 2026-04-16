@@ -175,15 +175,14 @@ export default function App() {
 
       // BG gradient
       const bgGrad = ctx.createLinearGradient(0, 0, SIZE, SIZE);
-      bgGrad.addColorStop(0, '#0a1a0a');
-      bgGrad.addColorStop(1, '#050d05');
+      bgGrad.addColorStop(0, '#161b22');
+      bgGrad.addColorStop(1, '#0f1117');
       ctx.fillStyle = bgGrad;
       ctx.fillRect(-20, -20, SIZE + 40, SIZE + 40);
 
-      // Grid cells alternating
       for (let x = 0; x < GRID; x++)
         for (let y = 0; y < GRID; y++) {
-          ctx.fillStyle = (x + y) % 2 === 0 ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.0)';
+          ctx.fillStyle = (x + y) % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0)';
           ctx.fillRect(x * C, y * C, C, C);
         }
 
@@ -192,9 +191,6 @@ export default function App() {
       const fx = food.x * C + C / 2, fy = food.y * C + C / 2;
       const fr = (C / 2 - 2) * pulse;
       ctx.save();
-      ctx.shadowColor = '#ff2244'; ctx.shadowBlur = 20 * pulse;
-
-      // apple body
       ctx.beginPath();
       ctx.arc(fx, fy + fr * 0.08, fr * 0.88, 0, Math.PI * 2);
       const appleGrad = ctx.createRadialGradient(fx - fr * 0.25, fy - fr * 0.2, 0, fx, fy, fr);
@@ -259,9 +255,8 @@ export default function App() {
       });
 
       if (ipos.length === 1) {
-        ctx.save(); ctx.shadowColor = '#39ff14'; ctx.shadowBlur = 18;
         ctx.beginPath(); ctx.arc(ipos[0].x, ipos[0].y, R, 0, Math.PI * 2);
-        ctx.fillStyle = '#39ff14'; ctx.fill(); ctx.restore();
+        ctx.fillStyle = '#3fb950'; ctx.fill();
       } else {
         for (let i = 0; i < ipos.length - 1; i++) {
           const ax = ipos[i].x, ay = ipos[i].y;
@@ -271,10 +266,10 @@ export default function App() {
 
           const t0 = i / (ipos.length - 1);
           const t1 = (i + 1) / (ipos.length - 1);
-          const g0 = Math.round(255 - t0 * 120), g1 = Math.round(255 - t1 * 120);
-          const r0 = Math.round(40 + t0 * 30), r1 = Math.round(40 + t1 * 30);
+          const g0 = Math.round(185 - t0 * 80), g1 = Math.round(185 - t1 * 80);
+          const r0 = Math.round(30 + t0 * 20), r1 = Math.round(30 + t1 * 20);
 
-          if (i === 0) { ctx.save(); ctx.shadowColor = '#39ff14'; ctx.shadowBlur = 16; }
+          if (i === 0) { ctx.save(); }
           const grad = ctx.createLinearGradient(ax, ay, bx, by);
           grad.addColorStop(0, `rgb(${r0},${g0},10)`);
           grad.addColorStop(1, `rgb(${r1},${g1},10)`);
@@ -309,10 +304,8 @@ export default function App() {
 
       // Head
       const hx = ipos[0].x, hy = ipos[0].y;
-      ctx.save(); ctx.shadowColor = '#39ff14'; ctx.shadowBlur = 22;
       ctx.beginPath(); ctx.arc(hx, hy, R * 1.08, 0, Math.PI * 2);
-      ctx.fillStyle = '#4eff20'; ctx.fill();
-      ctx.restore();
+      ctx.fillStyle = '#3fb950'; ctx.fill();
 
       // Head highlight
       ctx.beginPath(); ctx.arc(hx - R * 0.3, hy - R * 0.3, R * 0.4, 0, Math.PI * 2);
@@ -347,9 +340,8 @@ export default function App() {
         const a = Math.min(speedFlashRef.current / 40, 1);
         ctx.save();
         ctx.globalAlpha = a;
-        ctx.shadowColor = '#ffdd00'; ctx.shadowBlur = 20;
-        ctx.fillStyle = '#ffdd00';
-        ctx.font = `bold ${C * 0.9}px monospace`;
+        ctx.fillStyle = '#d29922';
+        ctx.font = `bold ${C * 0.9}px 'Inter',sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('⚡ SPEED UP!', SIZE / 2, SIZE / 2);
         ctx.restore();
@@ -362,9 +354,8 @@ export default function App() {
         f.life *= 0.94;
         ctx.save();
         ctx.globalAlpha = f.life;
-        ctx.shadowColor = '#39ff14'; ctx.shadowBlur = 10;
-        ctx.fillStyle = '#39ff14';
-        ctx.font = `bold ${C * 0.7}px monospace`;
+        ctx.fillStyle = '#3fb950';
+        ctx.font = `bold ${C * 0.7}px 'Inter',sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('+10', f.x, f.y);
         ctx.restore();
@@ -384,40 +375,37 @@ export default function App() {
       if (over) {
         ctx.fillStyle = 'rgba(8,12,16,0.82)'; ctx.fillRect(0, 0, SIZE, SIZE);
         ctx.save();
-        ctx.shadowColor = '#ff4444'; ctx.shadowBlur = 30;
-        ctx.fillStyle = '#ff4444'; ctx.font = `bold ${C * 1.4}px monospace`;
+        ctx.fillStyle = '#f85149'; ctx.font = `bold ${C * 1.4}px 'Inter',sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('GAME OVER', SIZE / 2, SIZE / 2 - C * 1.2);
         ctx.restore();
-        ctx.fillStyle = '#39ff14'; ctx.font = `${C * 0.8}px monospace`;
+        ctx.fillStyle = '#c9d1d9'; ctx.font = `${C * 0.8}px 'Inter',sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(`Score: ${stateRef.current.score}`, SIZE / 2, SIZE / 2 - C * 0.1);
-        ctx.fillStyle = 'rgba(57,255,20,0.45)'; ctx.font = `${C * 0.55}px monospace`;
+        ctx.fillStyle = '#8b949e'; ctx.font = `${C * 0.55}px 'Inter',sans-serif`;
         ctx.fillText('Enter name below to save', SIZE / 2, SIZE / 2 + C * 0.9);
       }
 
       if (!running && !over && stateRef.current.started) {
         ctx.fillStyle = 'rgba(8,12,16,0.6)'; ctx.fillRect(0, 0, SIZE, SIZE);
         ctx.save();
-        ctx.shadowColor = '#39ff14'; ctx.shadowBlur = 20;
-        ctx.fillStyle = '#39ff14'; ctx.font = `bold ${C * 1.2}px monospace`;
+        ctx.fillStyle = '#3fb950'; ctx.font = `bold ${C * 1.2}px 'Inter',sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('⏸ PAUSED', SIZE / 2, SIZE / 2);
+        ctx.fillText('PAUSED', SIZE / 2, SIZE / 2);
         ctx.restore();
-        ctx.fillStyle = 'rgba(57,255,20,0.45)'; ctx.font = `${C * 0.55}px monospace`;
+        ctx.fillStyle = '#8b949e'; ctx.font = `${C * 0.55}px 'Inter',sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('Press P to resume', SIZE / 2, SIZE / 2 + C * 1.1);
+        ctx.fillText('Press Backspace to resume', SIZE / 2, SIZE / 2 + C * 1.1);
       }
 
       if (!running && !over && !stateRef.current.started) {
         ctx.fillStyle = 'rgba(8,12,16,0.7)'; ctx.fillRect(0, 0, SIZE, SIZE);
         ctx.save();
-        ctx.shadowColor = '#39ff14'; ctx.shadowBlur = 30;
-        ctx.fillStyle = '#39ff14'; ctx.font = `bold ${C * 1.5}px monospace`;
+        ctx.fillStyle = '#f0f6fc'; ctx.font = `bold ${C * 1.5}px 'Inter',sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('🐍 SNAKE', SIZE / 2, SIZE / 2 - C);
+        ctx.fillText('SNAKE', SIZE / 2, SIZE / 2 - C);
         ctx.restore();
-        ctx.fillStyle = 'rgba(57,255,20,0.6)'; ctx.font = `${C * 0.65}px monospace`;
+        ctx.fillStyle = '#8b949e'; ctx.font = `${C * 0.65}px 'Inter',sans-serif`;
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('Press SPACE or click Start', SIZE / 2, SIZE / 2 + C * 0.4);
       }
@@ -552,30 +540,30 @@ export default function App() {
 }
 
 const s = {
-  root: { display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: '#050d05', fontFamily: "'Courier New', monospace", color: '#eee' },
-  sidebar: { width: 200, minWidth: 200, height: '100vh', background: '#071007', borderRight: '1px solid #39ff1420', display: 'flex', flexDirection: 'column', padding: '20px 16px', gap: 10, overflowY: 'auto' },
-  logo: { fontSize: 18, fontWeight: 'bold', color: '#39ff14', letterSpacing: 3, textShadow: '0 0 20px #39ff14, 0 0 40px #39ff1466', marginBottom: 4, textAlign: 'center' },
-  card: { background: '#050d05', border: '1px solid #39ff1420', borderRadius: 8, padding: '10px 14px', textAlign: 'center' },
-  cardLabel: { fontSize: 10, letterSpacing: 3, color: '#39ff1466', marginBottom: 2 },
-  cardVal: { fontSize: 28, fontWeight: 'bold', color: '#39ff14', textShadow: '0 0 12px #39ff1499' },
-  divider: { height: 1, background: '#39ff1418', margin: '4px 0' },
-  btn: { padding: '10px 0', background: 'linear-gradient(135deg, #39ff1422, #39ff1410)', border: '1px solid #39ff14', borderRadius: 6, cursor: 'pointer', fontWeight: 'bold', color: '#39ff14', fontSize: 13, letterSpacing: 2, textShadow: '0 0 8px #39ff14', boxShadow: '0 0 14px #39ff1430', width: '100%', transition: 'all 0.15s' },
-  btnSecondary: { background: 'transparent', border: '1px solid #39ff1440', color: '#39ff1488', textShadow: 'none', boxShadow: 'none', marginTop: 4 },
+  root: { display: 'flex', width: '100vw', height: '100vh', overflow: 'hidden', background: '#0f1117', fontFamily: "'Inter','Segoe UI',sans-serif", color: '#e2e8f0' },
+  sidebar: { width: 200, minWidth: 200, height: '100vh', background: '#161b22', borderRight: '1px solid #30363d', display: 'flex', flexDirection: 'column', padding: '20px 16px', gap: 10, overflowY: 'auto' },
+  logo: { fontSize: 16, fontWeight: '700', color: '#f0f6fc', letterSpacing: 2, marginBottom: 4, textAlign: 'center' },
+  card: { background: '#0f1117', border: '1px solid #30363d', borderRadius: 8, padding: '10px 14px', textAlign: 'center' },
+  cardLabel: { fontSize: 10, letterSpacing: 3, color: '#8b949e', marginBottom: 2 },
+  cardVal: { fontSize: 28, fontWeight: '700', color: '#f0f6fc' },
+  divider: { height: 1, background: '#30363d', margin: '4px 0' },
+  btn: { padding: '10px 0', background: '#238636', border: '1px solid #2ea043', borderRadius: 6, cursor: 'pointer', fontWeight: '600', color: '#fff', fontSize: 13, letterSpacing: 1, width: '100%', transition: 'background 0.15s' },
+  btnSecondary: { background: '#161b22', border: '1px solid #30363d', color: '#8b949e', marginTop: 4 },
   gameOverPanel: { display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'stretch' },
-  gameOverText: { textAlign: 'center', color: '#ff4444', fontSize: 13, fontWeight: 'bold', letterSpacing: 2, textShadow: '0 0 12px #ff4444' },
-  input: { padding: '8px 10px', background: '#050d05', border: '1px solid #39ff1440', borderRadius: 6, color: '#eee', fontFamily: 'inherit', fontSize: 13, outline: 'none', width: '100%' },
-  savedMsg: { textAlign: 'center', color: '#39ff14', fontSize: 13 },
-  hint: { fontSize: 11, color: '#39ff1455', lineHeight: 1.6, textAlign: 'center' },
-  lbTitle: { fontSize: 10, letterSpacing: 3, color: '#39ff1466', textAlign: 'center', marginBottom: 2 },
-  lbEmpty: { fontSize: 11, color: '#39ff1433', textAlign: 'center' },
-  lbRow: { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 2px', borderBottom: '1px solid #ffffff06' },
+  gameOverText: { textAlign: 'center', color: '#f85149', fontSize: 13, fontWeight: '700', letterSpacing: 2 },
+  input: { padding: '8px 10px', background: '#0f1117', border: '1px solid #30363d', borderRadius: 6, color: '#f0f6fc', fontFamily: 'inherit', fontSize: 13, outline: 'none', width: '100%' },
+  savedMsg: { textAlign: 'center', color: '#2ea043', fontSize: 13 },
+  hint: { fontSize: 11, color: '#8b949e', lineHeight: 1.6, textAlign: 'center' },
+  lbTitle: { fontSize: 10, letterSpacing: 3, color: '#8b949e', textAlign: 'center', marginBottom: 2 },
+  lbEmpty: { fontSize: 11, color: '#484f58', textAlign: 'center' },
+  lbRow: { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 2px', borderBottom: '1px solid #21262d' },
   lbRank: { fontSize: 13, width: 22, textAlign: 'center' },
-  lbName: { flex: 1, fontSize: 12, color: '#ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  lbScore: { fontSize: 12, color: '#39ff14', fontWeight: 'bold' },
-  progressBg: { height: 5, background: '#39ff1418', borderRadius: 4, marginTop: 6, overflow: 'hidden' },
-  progressFill: { height: '100%', background: 'linear-gradient(90deg, #39ff14, #aaff00)', borderRadius: 4, transition: 'width 0.3s ease', boxShadow: '0 0 6px #39ff14' },
-  progressLabel: { fontSize: 9, color: '#39ff1455', textAlign: 'right', marginTop: 2, letterSpacing: 1 },
+  lbName: { flex: 1, fontSize: 12, color: '#c9d1d9', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  lbScore: { fontSize: 12, color: '#2ea043', fontWeight: '700' },
+  progressBg: { height: 4, background: '#21262d', borderRadius: 4, marginTop: 6, overflow: 'hidden' },
+  progressFill: { height: '100%', background: '#238636', borderRadius: 4, transition: 'width 0.3s ease' },
+  progressLabel: { fontSize: 9, color: '#8b949e', textAlign: 'right', marginTop: 2, letterSpacing: 1 },
   canvasWrap: { flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  boardGlow: { borderRadius: 6, boxShadow: '0 0 80px #39ff1415, 0 0 160px #39ff1408', border: '1px solid #39ff1425', overflow: 'hidden' },
+  boardGlow: { borderRadius: 6, border: '1px solid #30363d', overflow: 'hidden' },
   canvas: { display: 'block' },
 };
